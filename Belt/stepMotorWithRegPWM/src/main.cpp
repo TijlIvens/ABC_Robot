@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Wire.h>
 
 bool couldStep = false;
 
@@ -56,7 +57,31 @@ void DoStep(){
   }
 }
 
+void receiveEvent(int numBytes){
+  while(Wire.available()){
+    char rb = Wire.read();
 
+    if(rb & 0x01) Serial.println("enabled");
+
+    if(rb & 0x02) Serial.println("vooruit");
+    else Serial.println("achteruit");
+    
+    switch(rb & 0x0C){
+      case 0x04:
+        Serial.println("slow");
+        break;
+      case 0x08:
+        Serial.println("medium");
+        break;
+      case 0x0C:
+        Serial.println("fast");
+        break;
+      default:
+        Serial.println("something wrong");
+        break;
+    }  
+  }
+}
 
 
 
@@ -76,6 +101,10 @@ int main(void){
 
   DDRD |= (1<<PD3);           //STEP
   DDRD |= (1<<PD2);           //DIR
+
+  //I2C setup
+  Wire.begin(8);
+  Wire.onReceive(receiveEvent);
 
   //for testing
   operationMode = cwMode;
