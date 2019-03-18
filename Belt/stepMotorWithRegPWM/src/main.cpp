@@ -61,25 +61,37 @@ void receiveEvent(int numBytes){
   while(Wire.available()){
     char rb = Wire.read();
 
-    if(rb & 0x01) Serial.println("enabled");
-
-    if(rb & 0x02) Serial.println("vooruit");
-    else Serial.println("achteruit");
+    if(rb & 0x01){
+      Serial.println("operationMode = cwMode");
+      operationMode = cwMode;
+    }
+    else{
+      Serial.println("operationMode = ccwMode");
+      operationMode = ccwMode;
+    }
     
-    switch(rb & 0x0C){
+    switch(rb & 0x06){
+      case 0x00:
+        operationMode = parkedMode;
+        Serial.println("operationMode = parkedMode");
+        break;
+      case 0x02:
+        operationSpeed = slowSpeed;
+        Serial.println("operationSpeed = slowSpeed");
+        break;
       case 0x04:
-        Serial.println("slow");
+        operationSpeed = mediumSpeed;
+        Serial.println("operationSpeed = mediumSpeed");
         break;
-      case 0x08:
-        Serial.println("medium");
-        break;
-      case 0x0C:
-        Serial.println("fast");
+      case 0x06:
+        operationSpeed = fastSpeed;
+        Serial.println("operationSpeed = fastSpeed");
         break;
       default:
         Serial.println("something wrong");
         break;
-    }  
+    }
+    Serial.println("========================");
   }
 }
 
