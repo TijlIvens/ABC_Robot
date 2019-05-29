@@ -19,7 +19,7 @@ void testForwardsToBackwards()
 
     delay(10);
   }
-  delay(5000);
+  delay(10000);
   for (int i = 127; i > 0; i--)
   {
     Wire.beginTransmission(8);
@@ -36,7 +36,7 @@ void testForwardsToBackwards()
 
     delay(10);
   }
-  delay(5000);
+  delay(10000);
 }
 
 void setup()
