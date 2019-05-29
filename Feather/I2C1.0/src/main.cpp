@@ -2,60 +2,67 @@
 #include <VL53L0X.h>
 
 //#define XSHUT_pin6 not required for address change
-#define XSHUT_pin3 14
-#define XSHUT_pin2 13
-#define XSHUT_pin1 12
 
 //ADDRESS_DEFAULT 0b0101001 or 41
 //#define Sensor1_newAddress 41 not required address change
 #define Sensor2_newAddress 42
 #define Sensor3_newAddress 43
+#define Sensor4_newAddress 44
+#define Sensor5_newAddress 45
+#define Sensor6_newAddress 46
+#define Sensor7_newAddress 47
+#define Sensor8_newAddress 48
 
-VL53L0X Sensor1;
-VL53L0X Sensor2;
-VL53L0X Sensor3;
+uint8_t addresses[] = {41,42,43,44,45,46,47,48};
+byte bytes[] = {B00000010,B00000100,B00001000,B10000000,B01000000,B00000001,B00100000,B00010000};
+
+int latchPin = 14;
+int clockPin = 32;
+int dataPin = 15;
+
+VL53L0X sensors[8];
+
 
 void setup()
-{ /*WARNING*/
-  //Shutdown pins of VL53L0X ACTIVE-LOW-ONLY NO TOLERANT TO 5V will fry them
-  pinMode(XSHUT_pin1, OUTPUT);
-  pinMode(XSHUT_pin2, OUTPUT);
-  pinMode(XSHUT_pin3, OUTPUT);
-  
-  Serial.begin(9600);
-  
-  Wire.begin();
-  Sensor3.setAddress(Sensor3_newAddress);
-  pinMode(XSHUT_pin2, INPUT);
-  delay(10);
-  Sensor2.setAddress(Sensor2_newAddress);
-  pinMode(XSHUT_pin1, INPUT);
-  delay(10);
-  
-  Sensor1.init();
-  Sensor2.init();
-  Sensor3.init();
-  
-  Sensor1.setTimeout(500);
-  Sensor2.setTimeout(500);
-  Sensor3.setTimeout(500);
-  // Start continuous back-to-back mode (take readings as
-  // fast as possible).  To use continuous timed mode
-  // instead, provide a desired inter-measurement period in
-  // ms (e.g. sensor.startContinuous(100)).
-  Sensor1.startContinuous();
-  Sensor2.startContinuous();
-  Sensor3.startContinuous();
+{
+  pinMode(latchPin, OUTPUT);
+  pinMode(clockPin, OUTPUT);
+  pinMode(dataPin, OUTPUT);
 
+  Serial.begin(9600);
+
+  Wire.begin();
+  for (int i=0; i < 5; i+=1){
+    digitalWrite(latchPin, LOW);
+    delay(20);
+    shiftOut(dataPin, clockPin, MSBFIRST, bytes[i]);
+    delay(20);
+    digitalWrite(latchPin, HIGH);
+    delay(20);
+    sensors[i].init();
+    delay(20);
+   
+    sensors[i].setAddress(addresses[i]);
+    delay(50);
+  }
+    
+  digitalWrite(latchPin, LOW);
+  shiftOut(dataPin, clockPin, MSBFIRST, B11111111);
+  digitalWrite(latchPin, HIGH);
+  
+  for (int i=0; i < 5; i+=1){
+    delay(5);
+     sensors[i].startContinuous();
+    delay(5);
+  }
 }
 
 void loop()
 {
-  Serial.print(Sensor1.readRangeContinuousMillimeters());
-  Serial.print(',');
-  Serial.print(Sensor2.readRangeContinuousMillimeters());
-  Serial.print(',');
-  Serial.print(Sensor3.readRangeContinuousMillimeters());
-  Serial.print(',');
+  for (int i=0; i < 5; i+=1){
+    Serial.print(sensors[i].readRangeContinuousMillimeters());
+    Serial.print(',');
+    delay(20);
+  }
   Serial.println();
 }
