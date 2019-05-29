@@ -7,10 +7,12 @@
 #define LSTEP PB1
 
 bool shouldBeOutput = true;
+int byteToOCR = 4;
 
 ISR(TIMER0_COMPA_vect)
 {
   //hier moet worden ingesteld of de freq op de output moet worden gezet of niet
+  OCR0A = byteToOCR;
 }
 ISR(TIMER1_COMPA_vect)
 {
@@ -20,6 +22,31 @@ ISR(TIMER1_COMPA_vect)
   else
     TCCR1A &= ~(1 << COM1A0);
   //Serial.println("hij komt hier wel");
+
+  OCR1AL = byteToOCR;
+}
+
+void receiveEvent(int numBytes)
+{
+  while (Wire.available())
+  {
+    char rb = Wire.read();
+    int val = rb & 0x7F;
+    byteToOCR = map(val, 1, 127, 255, 3);
+
+    if (rb & 0x80) //dit leest de vooruit/achteruit uit
+    {
+      Serial.print("Vooruit : ");
+      PORTD |= (1 << RDIR) | (1 << LDIR);
+    }
+    else
+    {
+      Serial.print("Achteruit : ");
+      PORTD &= ~(1 << RDIR) & ~(1 << LDIR);
+    }
+
+    Serial.println(byteToOCR);
+  }
 }
 
 int main(void)
@@ -43,20 +70,21 @@ int main(void)
   TIMSK0 |= (1 << OCIE0A); //Output Compare A Match Interrupt Enable
   TIMSK1 |= (1 << OCIE1A);
 
-  OCR0A = 4; //dit zal de snelheid bepalen van de stappenmotor, hoe kleiner hoe sneller
-  OCR1AL = 7;
+  OCR0A = 255; //dit zal de snelheid bepalen van de stappenmotor, hoe kleiner hoe sneller
+  OCR1AL = 4;
 
-  DDRD |= (1 << LDIR);
   DDRD |= (1 << RDIR);
-  DDRD |= (1 << LSTEP);
-  DDRB |= (1 << RSTEP);
+  DDRD |= (1 << LDIR);
+  DDRD |= (1 << RSTEP);
+  DDRB |= (1 << LSTEP);
 
   PORTD |= (1 << LDIR);
   PORTD |= (1 << RDIR);
 
   //I2C setup
-  //Wire.begin(8);
-  //Wire.onReceive(receiveEvent);
+  Wire.begin(8);
+  Wire.onReceive(receiveEvent);
+
   Serial.begin(9600);
 
   while (1)
