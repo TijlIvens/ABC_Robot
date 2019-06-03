@@ -41,9 +41,9 @@ void setup()
     delay(20);
     sensors[i].init();
     delay(20);
-   
     sensors[i].setAddress(addresses[i]);
     delay(50);
+    //sensors[i].startContinuous();
   }
     
   digitalWrite(latchPin, LOW);
@@ -52,7 +52,7 @@ void setup()
   
   for (int i=0; i < 5; i+=1){
     delay(5);
-     sensors[i].startContinuous();
+     //sensors[i].startContinuous();
     delay(5);
   }
 }
